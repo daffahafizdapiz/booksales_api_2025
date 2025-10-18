@@ -2,16 +2,12 @@
 
 namespace App\Models;
 
-class Genre
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class Genre extends Model
 {
-    public static function all()
-    {
-        return [
-            ['id' => 1, 'name' => 'Fiction', 'description' => 'Imaginative or made-up stories.'],
-            ['id' => 2, 'name' => 'Non-Fiction', 'description' => 'Based on real events or facts.'],
-            ['id' => 3, 'name' => 'Science Fiction', 'description' => 'Stories about futuristic science and technology.'],
-            ['id' => 4, 'name' => 'Romance', 'description' => 'Love and emotional relationship stories.'],
-            ['id' => 5, 'name' => 'Mystery', 'description' => 'Focuses on solving a crime or puzzle.'],
-        ];
-    }
+    use HasFactory;
+
+    protected $fillable = ['nama', 'deskripsi'];
 }
