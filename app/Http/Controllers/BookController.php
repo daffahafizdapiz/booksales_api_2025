@@ -4,75 +4,122 @@ namespace App\Http\Controllers;
 
 use App\Models\Book;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 class BookController extends Controller
 {
     // GET all books
     public function index()
     {
-        return response()->json(Book::all(), 200);
+        return response()->json([
+            'success' => true,
+            'data' => Book::all()
+        ], 200);
     }
 
-    // GET book by id
+    // GET book by ID
     public function show($id)
     {
         $book = Book::find($id);
         if (!$book) {
-            return response()->json(['message' => 'Book not found'], 404);
+            return response()->json([
+                'success' => false,
+                'message' => 'Book not found'
+            ], 404);
         }
-        return response()->json($book, 200);
+
+        return response()->json([
+            'success' => true,
+            'data' => $book
+        ], 200);
     }
 
     // POST create new book
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'judul' => 'required|string',
-            'penerbit' => 'required|string',
+        // 1 Validasi input
+        $validator = Validator::make($request->all(), [
+            'judul' => 'required|string|max:255',
+            'penerbit' => 'required|string|max:255',
             'tahun_terbit' => 'required|integer',
-            'stok' => 'required|integer',
+            'stok' => 'required|integer|min:0',
             'author_id' => 'required|exists:authors,id'
         ]);
 
-        $book = Book::create($validated);
+        // 2. Jika validasi gagal
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        // 3 Simpan buku baru
+        $book = Book::create($validator->validated());
+
         return response()->json([
+            'success' => true,
             'message' => 'Book created successfully',
             'data' => $book
         ], 201);
     }
 
-    // PUT update book
+    //  PUT update book
     public function update(Request $request, $id)
     {
         $book = Book::find($id);
         if (!$book) {
-            return response()->json(['message' => 'Book not found'], 404);
+            return response()->json([
+                'success' => false,
+                'message' => 'Book not found'
+            ], 404);
         }
 
-        $validated = $request->validate([
-            'judul' => 'sometimes|string',
-            'penerbit' => 'sometimes|string',
+        // Validasi input
+        $validator = Validator::make($request->all(), [
+            'judul' => 'sometimes|string|max:255',
+            'penerbit' => 'sometimes|string|max:255',
             'tahun_terbit' => 'sometimes|integer',
-            'stok' => 'sometimes|integer',
+            'stok' => 'sometimes|integer|min:0',
             'author_id' => 'sometimes|exists:authors,id'
         ]);
 
-        $book->update($validated);
+        // Kalau gagal validasi
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        // Update data
+        $book->update($validator->validated());
+
         return response()->json([
+            'success' => true,
             'message' => 'Book updated successfully',
             'data' => $book
         ], 200);
     }
 
-    // DELETE book
+    //  DELETE book
     public function destroy($id)
     {
         $book = Book::find($id);
         if (!$book) {
-            return response()->json(['message' => 'Book not found'], 404);
+            return response()->json([
+                'success' => false,
+                'message' => 'Book not found'
+            ], 404);
         }
 
         $book->delete();
-        return response()->json(['message' => 'Book deleted successfully'], 200);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Book deleted successfully'
+        ], 200);
     }
 }

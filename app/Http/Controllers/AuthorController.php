@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Author;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 class AuthorController extends Controller
 {
@@ -16,13 +17,30 @@ class AuthorController extends Controller
     // CREATE author
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        // 1 Validasi manual pakai Validator
+        $validator = Validator::make($request->all(), [
             'nama' => 'required|string|max:100',
             'asal' => 'nullable|string|max:100',
         ]);
 
-        $author = Author::create($validated);
-        return response()->json($author, 201);
+        // 2 Kalau gagal, kirim error JSON
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        // 3 Simpan data author
+        $author = Author::create($validator->validated());
+
+        // 4️⃣ Response sukses
+        return response()->json([
+            'success' => true,
+            'message' => 'Author created successfully',
+            'data' => $author
+        ], 201);
     }
 
     // SHOW author by ID
@@ -30,10 +48,16 @@ class AuthorController extends Controller
     {
         $author = Author::find($id);
         if (!$author) {
-            return response()->json(['message' => 'Author not found'], 404);
+            return response()->json([
+                'success' => false,
+                'message' => 'Author not found'
+            ], 404);
         }
 
-        return response()->json($author, 200);
+        return response()->json([
+            'success' => true,
+            'data' => $author
+        ], 200);
     }
 
     // UPDATE author
@@ -41,16 +65,34 @@ class AuthorController extends Controller
     {
         $author = Author::find($id);
         if (!$author) {
-            return response()->json(['message' => 'Author not found'], 404);
+            return response()->json([
+                'success' => false,
+                'message' => 'Author not found'
+            ], 404);
         }
 
-        $validated = $request->validate([
+        // Validasi input
+        $validator = Validator::make($request->all(), [
             'nama' => 'required|string|max:100',
             'asal' => 'nullable|string|max:100',
         ]);
 
-        $author->update($validated);
-        return response()->json($author, 200);
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        // Update data author
+        $author->update($validator->validated());
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Author updated successfully',
+            'data' => $author
+        ], 200);
     }
 
     // DELETE author
@@ -58,10 +100,17 @@ class AuthorController extends Controller
     {
         $author = Author::find($id);
         if (!$author) {
-            return response()->json(['message' => 'Author not found'], 404);
+            return response()->json([
+                'success' => false,
+                'message' => 'Author not found'
+            ], 404);
         }
 
         $author->delete();
-        return response()->json(['message' => 'Author deleted successfully'], 200);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Author deleted successfully'
+        ], 200);
     }
 }
