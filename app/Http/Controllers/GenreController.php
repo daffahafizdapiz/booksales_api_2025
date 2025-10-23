@@ -17,13 +17,13 @@ class GenreController extends Controller
     // CREATE genre
     public function store(Request $request)
     {
-        // 1️⃣ Validasi input
+        // 1 Validasi input
         $validator = Validator::make($request->all(), [
             'nama' => 'required|string|max:100',
             'deskripsi' => 'nullable|string',
         ]);
 
-        // 2️⃣ Kalau gagal, kirim pesan error
+        // 2 Kalau gagal, kirim pesan error
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
@@ -32,7 +32,7 @@ class GenreController extends Controller
             ], 422);
         }
 
-        // 3️⃣ Simpan genre baru
+        // 3 Simpan genre baru
         $genre = Genre::create($validator->validated());
 
         return response()->json([
