@@ -8,25 +8,17 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::disableForeignKeyConstraints();
-
         Schema::create('books', function (Blueprint $table) {
             $table->id();
-            $table->string('judul');
-            $table->string('penerbit');
-            $table->year('tahun_terbit');
-            $table->integer('stok');
-            $table->unsignedBigInteger('author_id');
+            $table->string('title', 255);
+            $table->text('description')->nullable();
+            $table->decimal('price', 10, 2);
+            $table->integer('stock')->default(0);
+            $table->string('cover_photo');
+            $table->foreignId('genre_id')->constrained('genres')->onDelete('cascade');
+            $table->foreignId('author_id')->constrained('authors')->onDelete('cascade');
             $table->timestamps();
-
-            // Relasi ke tabel authors
-            $table->foreign('author_id')
-                  ->references('id')
-                  ->on('authors')
-                  ->onDelete('cascade');
         });
-
-        Schema::enableForeignKeyConstraints();
     }
 
     public function down(): void

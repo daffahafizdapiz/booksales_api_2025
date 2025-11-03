@@ -7,39 +7,34 @@ use App\Http\Controllers\AuthorController;
 use App\Http\Controllers\BookController;
 use App\Http\Controllers\TransactionController;
 
-// Tes koneksi API
-Route::get('/ping', function () {
-    return response()->json(['message' => '✅ Server aktif di booksales-api!']);
-});
+// ✅ Health check
+Route::get('/ping', fn() => response()->json(['message' => 'Booksales API running fine 🚀']));
 
-// AUTH ROUTES
+// ✅ Auth Routes
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+Route::middleware('jwt.verify')->post('/logout', [AuthController::class, 'logout']);
+Route::middleware('jwt.verify')->get('/me', fn() => response()->json(auth()->user()));
 
-// Logout (wajib login JWT)
-Route::middleware('auth:api')->post('/logout', [AuthController::class, 'logout']);
-
-// PUBLIC ROUTES (tanpa login)
-// Semua orang bisa lihat daftar & detail Author, Genre, dan Book
+// ✅ Public Routes
 Route::apiResource('authors', AuthorController::class)->only(['index', 'show']);
 Route::apiResource('genres', GenreController::class)->only(['index', 'show']);
 Route::apiResource('books', BookController::class)->only(['index', 'show']);
 
-// PROTECTED ROUTES (login wajib JWT)
-Route::middleware(['auth:api'])->group(function () {
+// ✅ Protected Routes (JWT Required)
+Route::middleware(['jwt.verify'])->group(function () {
 
-    // ADMIN HANYA (bisa create/update/delete)
+    // ADMIN
     Route::middleware('role:admin')->group(function () {
         Route::apiResource('authors', AuthorController::class)->only(['store', 'update', 'destroy']);
         Route::apiResource('genres', GenreController::class)->only(['store', 'update', 'destroy']);
         Route::apiResource('books', BookController::class)->only(['store', 'update', 'destroy']);
 
-        // Admin bisa lihat semua transaksi dan hapus transaksi
         Route::get('/transactions', [TransactionController::class, 'index']);
         Route::delete('/transactions/{id}', [TransactionController::class, 'destroy']);
     });
 
-    // CUSTOMER (bisa buat & lihat transaksi sendiri)
+    // USER
     Route::middleware('role:user')->group(function () {
         Route::post('/transactions', [TransactionController::class, 'store']);
         Route::put('/transactions/{id}', [TransactionController::class, 'update']);

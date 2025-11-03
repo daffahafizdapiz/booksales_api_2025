@@ -8,100 +8,107 @@ use Illuminate\Support\Facades\Validator;
 
 class GenreController extends Controller
 {
-    // READ all genres
+    // Get all genres
     public function index()
     {
-        return response()->json(Genre::all(), 200);
+        $genres = Genre::all();
+
+        return response()->json([
+            'success' => true,
+            'data'    => $genres
+        ], 200);
     }
 
-    // CREATE genre
+    // Create a new genre
     public function store(Request $request)
     {
-        // 1 Validasi input
+        // Validate user input
         $validator = Validator::make($request->all(), [
-            'nama' => 'required|string|max:100',
-            'deskripsi' => 'nullable|string',
+            'name'        => 'required|string|max:100',
+            'description' => 'nullable|string',
         ]);
 
-        // 2 Kalau gagal, kirim pesan error
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'message' => 'Validation failed.',
+                'errors'  => $validator->errors()
             ], 422);
         }
 
-        // 3 Simpan genre baru
+        // Save new genre
         $genre = Genre::create($validator->validated());
 
         return response()->json([
             'success' => true,
-            'message' => 'Genre created successfully',
-            'data' => $genre
+            'message' => 'Genre created successfully.',
+            'data'    => $genre
         ], 201);
     }
 
-    // SHOW genre by ID
+    // Get specific genre by ID
     public function show($id)
     {
         $genre = Genre::find($id);
+
         if (!$genre) {
             return response()->json([
                 'success' => false,
-                'message' => 'Genre not found'
+                'message' => 'Genre not found.'
             ], 404);
         }
 
         return response()->json([
             'success' => true,
-            'data' => $genre
+            'data'    => $genre
         ], 200);
     }
 
-    // UPDATE genre
+    // Update genre
     public function update(Request $request, $id)
     {
         $genre = Genre::find($id);
+
         if (!$genre) {
             return response()->json([
                 'success' => false,
-                'message' => 'Genre not found'
+                'message' => 'Genre not found.'
             ], 404);
         }
 
-        // Validasi input
+        // Validate request data
         $validator = Validator::make($request->all(), [
-            'nama' => 'required|string|max:100',
-            'deskripsi' => 'nullable|string',
+            'name'        => 'sometimes|string|max:100',
+            'description' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'message' => 'Validation failed.',
+                'errors'  => $validator->errors()
             ], 422);
         }
 
-        // Update data genre
+        // Update genre data
         $genre->update($validator->validated());
 
         return response()->json([
             'success' => true,
-            'message' => 'Genre updated successfully',
-            'data' => $genre
+            'message' => 'Genre updated successfully.',
+            'data'    => $genre
         ], 200);
     }
 
-    // DELETE genre
+    // Delete genre
     public function destroy($id)
     {
         $genre = Genre::find($id);
+
         if (!$genre) {
             return response()->json([
                 'success' => false,
-                'message' => 'Genre not found'
+                'message' => 'Genre not found.'
             ], 404);
         }
 
@@ -109,7 +116,7 @@ class GenreController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Genre deleted successfully'
+            'message' => 'Genre deleted successfully.'
         ], 200);
     }
 }

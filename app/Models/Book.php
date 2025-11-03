@@ -10,15 +10,28 @@ class Book extends Model
     use HasFactory;
 
     protected $fillable = [
-        'judul', 
-        'penerbit', 
-        'tahun_terbit', 
-        'stok', 
+        'title',
+        'description',
+        'price',
+        'stock',
+        'cover_photo',
+        'author',
+        'genre_id',
         'author_id'
     ];
+
+    public function genre()
+    {
+        return $this->belongsTo(Genre::class);
+    }
 
     public function author()
     {
         return $this->belongsTo(Author::class);
+    }
+
+    public function transactions()
+    {
+        return $this->hasMany(Transaction::class);
     }
 }

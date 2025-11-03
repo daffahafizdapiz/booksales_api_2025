@@ -4,122 +4,162 @@ namespace App\Http\Controllers;
 
 use App\Models\Book;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
 class BookController extends Controller
 {
-    // GET all books
+    // Get all books (with author & genre info)
     public function index()
     {
+        $books = Book::with(['author', 'genre'])->get();
+
         return response()->json([
             'success' => true,
-            'data' => Book::all()
+            'data'    => $books
         ], 200);
     }
 
-    // GET book by ID
+    // Get book by ID
     public function show($id)
     {
-        $book = Book::find($id);
+        $book = Book::with(['author', 'genre'])->find($id);
+
         if (!$book) {
             return response()->json([
                 'success' => false,
-                'message' => 'Book not found'
+                'message' => 'Book not found.'
             ], 404);
         }
 
         return response()->json([
             'success' => true,
-            'data' => $book
+            'data'    => $book
         ], 200);
     }
 
-    // POST create new book
+    // Create a new book (admin only)
     public function store(Request $request)
     {
-        // 1 Validasi input
+        // Validate input
         $validator = Validator::make($request->all(), [
-            'judul' => 'required|string|max:255',
-            'penerbit' => 'required|string|max:255',
-            'tahun_terbit' => 'required|integer',
-            'stok' => 'required|integer|min:0',
-            'author_id' => 'required|exists:authors,id'
+            'title'        => 'required|string|max:255',
+            'description'  => 'required|string|max:1000',
+            'price'        => 'required|numeric|min:0',
+            'stock'        => 'required|integer|min:0',
+            'cover_photo'  => 'required|image|mimes:jpeg,png,jpg|max:2048',
+            'genre_id'     => 'required|exists:genres,id',
+            'author_id'    => 'required|exists:authors,id'
         ]);
 
-        // 2. Jika validasi gagal
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'message' => 'Validation failed.',
+                'errors'  => $validator->errors()
             ], 422);
         }
 
-        // 3 Simpan buku baru
-        $book = Book::create($validator->validated());
+        // Upload book cover
+        $image = $request->file('cover_photo');
+        $image->store('books', 'public');
+
+        // Create new book record
+        $book = Book::create([
+            'title'        => $request->title,
+            'description'  => $request->description,
+            'price'        => $request->price,
+            'stock'        => $request->stock,
+            'cover_photo'  => $image->hashName(),
+            'genre_id'     => $request->genre_id,
+            'author_id'    => $request->author_id,
+        ]);
 
         return response()->json([
             'success' => true,
-            'message' => 'Book created successfully',
-            'data' => $book
+            'message' => 'Book created successfully.',
+            'data'    => $book
         ], 201);
     }
 
-    //  PUT update book
+    // Update existing book
     public function update(Request $request, $id)
     {
         $book = Book::find($id);
+
         if (!$book) {
             return response()->json([
                 'success' => false,
-                'message' => 'Book not found'
+                'message' => 'Book not found.'
             ], 404);
         }
 
-        // Validasi input
+        // Validate update data
         $validator = Validator::make($request->all(), [
-            'judul' => 'sometimes|string|max:255',
-            'penerbit' => 'sometimes|string|max:255',
-            'tahun_terbit' => 'sometimes|integer',
-            'stok' => 'sometimes|integer|min:0',
-            'author_id' => 'sometimes|exists:authors,id'
+            'title'        => 'sometimes|string|max:255',
+            'description'  => 'nullable|string|max:1000',
+            'price'        => 'sometimes|numeric|min:0',
+            'stock'        => 'sometimes|integer|min:0',
+            'cover_photo'  => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'genre_id'     => 'sometimes|exists:genres,id',
+            'author_id'    => 'sometimes|exists:authors,id',
         ]);
 
-        // Kalau gagal validasi
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'message' => 'Validation failed.',
+                'errors'  => $validator->errors()
             ], 422);
         }
 
-        // Update data
-        $book->update($validator->validated());
+        $data = $validator->validated();
+
+        // If there's a new cover uploaded
+        if ($request->hasFile('cover_photo')) {
+            $image = $request->file('cover_photo');
+            $image->store('books', 'public');
+
+            // Delete old cover if it exists
+            if ($book->cover_photo && Storage::disk('public')->exists('books/' . $book->cover_photo)) {
+                Storage::disk('public')->delete('books/' . $book->cover_photo);
+            }
+
+            $data['cover_photo'] = $image->hashName();
+        }
+
+        // Update book data
+        $book->update($data);
 
         return response()->json([
             'success' => true,
-            'message' => 'Book updated successfully',
-            'data' => $book
+            'message' => 'Book updated successfully.',
+            'data'    => $book
         ], 200);
     }
 
-    //  DELETE book
+    // Delete a book
     public function destroy($id)
     {
         $book = Book::find($id);
+
         if (!$book) {
             return response()->json([
                 'success' => false,
-                'message' => 'Book not found'
+                'message' => 'Book not found.'
             ], 404);
+        }
+
+        // Remove cover from storage if exists
+        if ($book->cover_photo && Storage::disk('public')->exists('books/' . $book->cover_photo)) {
+            Storage::disk('public')->delete('books/' . $book->cover_photo);
         }
 
         $book->delete();
 
         return response()->json([
             'success' => true,
-            'message' => 'Book deleted successfully'
+            'message' => 'Book deleted successfully.'
         ], 200);
     }
 }

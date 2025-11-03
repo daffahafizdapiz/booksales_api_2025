@@ -16,7 +16,7 @@ class Transaction extends Model
         'total_amount'
     ];
 
-    public function customer()
+    public function user()
     {
         return $this->belongsTo(User::class, 'customer_id');
     }
@@ -26,4 +26,3 @@ class Transaction extends Model
         return $this->belongsTo(Book::class);
     }
 }
-
