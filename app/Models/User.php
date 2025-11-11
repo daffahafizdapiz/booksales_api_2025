@@ -23,13 +23,6 @@ class User extends Authenticatable implements JWTSubject
         'remember_token',
     ];
 
-    public function setPasswordAttribute($value)
-    {
-        if (!empty($value)) {
-            $this->attributes['password'] = bcrypt($value);
-        }
-    }
-
     // JWT methods
     public function getJWTIdentifier()
     {
