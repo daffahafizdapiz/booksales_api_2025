@@ -69,10 +69,13 @@ class TransactionController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'errors' => $validator->errors()
+                'message' => 'Validation error',
+                'data' => $validator->errors()
             ], 422);
         }
 
+        $uniqueCode = "ORD-" . strtoupper(uniqid());
+        
         $user = auth('api')->user();
 
         if (!$user) {
